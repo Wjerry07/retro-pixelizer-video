@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Retro Pixelizer Pro · Video · audio</title>
+  <style>
+
+/* 主题变量：浅色模式的默认配色与尺寸 */
+:root {
+  --bg: #ffffff;
+  --fg: #000000;
+  --border: #000000;
+  --muted: #666666;
+  --panel-bg: #f5f5f5;
+  --hover-bg: #e0e0e0;
+  --accent: #000000;
+  --preview-box: 840px;
+}
+
+/* 主题变量：深色模式的覆盖配色 */
+[data-theme="dark"] {
+  --bg: #111111;
+  --fg: #eeeeee;
+  --border: #666666;
+  --muted: #888888;
+  --panel-bg: #1a1a1a;
+  --hover-bg: #2a2a2a;
+  --accent: #ffffff;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: "Courier New", "Liberation Mono", ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--fg);
+  height: 100vh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg);
+  z-index: 20;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.theme-btn:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  flex: 1;
+  overflow: hidden;
+  padding: 20px;
+  height: 100%;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.controls::-webkit-scrollbar {
+  display: none;
+}
+
+.preview-area {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel {
+  border: 2px solid var(--border);
+  padding: 16px;
+  background: var(--panel-bg);
+  flex-shrink: 0;
+}
+
+.panel.palette-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+}
+
+.panel-title {
+  font-weight: bold;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+.reset-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 10px;
+  padding: 2px 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.reset-btn:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.upload-area {
+  border: 2px dashed var(--border);
+  padding: 30px 10px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg) !important;
+  transition: border-color 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.upload-area:hover,
+.upload-area:active,
+.upload-area:focus {
+  background: var(--bg) !important;
+  border-color: var(--accent);
+}
+
+.upload-text {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 自定义滑块：设置目标像素宽度 */
+.custom-slider {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  margin: 5px 0;
+  touch-action: pan-y;
+  cursor: pointer;
+}
+
+.slider-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.slider-thumb {
+  position: absolute;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  background: transparent;
+  cursor: grab;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  touch-action: pan-y;
+}
+
+.slider-thumb::after {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  background: var(--fg);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  transition: transform 0.1s;
+}
+
+.slider-thumb:active::after {
+  transform: scale(1.2);
+}
+
+.slider-thumb:active {
+  cursor: grabbing;
+}
+
+.grid-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn-toggle {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: center;
+  transition: all 0.1s;
+}
+
+.btn-toggle:hover {
+  background: var(--hover-bg);
+}
+
+.btn-toggle.active {
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: bold;
+}
+
+.palette-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  padding: 4px;
+  background: var(--bg);
+  margin-bottom: 10px;
+}
+
+.palette-list::-webkit-scrollbar {
+  width: 6px;
+}
+.palette-list::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 3px;
+}
+
+.palette-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+  background: transparent;
+  color: var(--fg);
+  font-family: inherit;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  flex-shrink: 0;
+}
+
+.palette-btn:last-child {
+  border-bottom: none;
+}
+
+.palette-btn:hover {
+  background: var(--hover-bg);
+}
+
+.palette-btn.active {
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: bold;
+}
+
+.palette-name-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.palette-count {
+  opacity: 0.6;
+  font-size: 10px;
+}
+
+.palette-preview-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  width: 100%;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* XY 面板：调节影调（对比度/明暗） */
+.xy-pad-container {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  cursor: crosshair;
+  overflow: hidden;
+  touch-action: pan-y;
+  margin-bottom: 8px;
+}
+
+#xyGridCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+.action-btn {
+  width: 100%;
+  background: var(--fg);
+  color: var(--bg);
+  border: 2px solid var(--border);
+  padding: 12px;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn.recording {
+  background: var(--muted);
+}
+
+.status-bar {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  min-height: 1.5em;
+  display: none;
+}
+
+.status-bar.show {
+  display: block;
+}
+
+/* 预览画布容器 */
+.canvas-container {
+  background: var(--panel-bg);
+  border: 2px dashed var(--border);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: min(var(--preview-box), 100%);
+  height: min(var(--preview-box), 100%);
+  overflow: hidden;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.main.has-video .canvas-container {
+  border-style: solid;
+  align-items: center;
+}
+
+.canvas-container::after {
+  content: "预览区域 (请先在左侧上传视频)";
+  color: var(--muted);
+  font-size: 14px;
+  position: absolute;
+}
+
+.main.has-video .canvas-container::after {
+  display: none;
+}
+
+canvas#mainCanvas {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: none;
+  image-rendering: pixelated;
+  display: none;
+}
+
+.main.has-video canvas#mainCanvas {
+  display: block;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 2px solid var(--fg);
+  cursor: pointer;
+  display: none;
+  z-index: 20;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.close-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--fg);
+  stroke-width: 2.5;
+}
+
+.close-btn:hover,
+.close-btn:active {
+  background: var(--fg);
+}
+
+.close-btn:hover svg,
+.close-btn:active svg {
+  stroke: var(--bg);
+}
+
+.main.has-video .close-btn {
+  display: flex;
+}
+
+/* 隐藏的视频元素：仅用于解码，画面由 canvas 呈现 */
+#sourceVideo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 视频播放控制条 */
+.video-controls {
+  display: none;
+  width: min(var(--preview-box), 100%);
+  align-items: center;
+  gap: 10px;
+  border: 2px solid var(--border);
+  background: var(--panel-bg);
+  padding: 10px 12px;
+  flex: 0 0 auto;
+}
+
+.main.has-video .video-controls {
+  display: flex;
+}
+
+.vc-play {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.vc-play:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.vc-seek {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+}
+
+.vc-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--fg);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.vc-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--fg);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.vc-time {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .page {
+    display: block;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .controls {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .preview-area {
+    flex: 0 0 42vh;
+  }
+
+  .canvas-container {
+    width: 100%;
+    height: 100%;
+    padding: 6px;
+  }
+
+  .palette-list {
+    max-height: 200px;
+  }
+}
+  </style>
+</head>
+<body>
+
+<!-- 隐藏视频源：解码用，不直接显示 -->
+<video id="sourceVideo" muted playsinline></video>
+
+<div class="page" id="pageContainer">
+  <header class="header">
+    <div class="title">Retro Pixelizer Pro · Video · audio</div>
+    <button id="themeToggle" class="theme-btn">◐</button>
+  </header>
+
+  <main class="main" id="mainContainer">
+
+    <!-- 左侧控制面板 -->
+    <aside class="controls">
+
+      <!-- 上传视频 -->
+      <div class="panel">
+        <div class="panel-title">上传视频</div>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept="video/*" hidden>
+          <div class="upload-text">点击或拖拽上传视频<br>支持 MP4, WebM 等浏览器可解码格式</div>
+        </div>
+      </div>
+
+      <!-- 预处理面板：尺寸 + 影调 -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>图像预处理</span>
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label>视频像素宽</label>
+            <span id="widthDisplay" style="font-size: 12px; font-weight: bold; color: var(--accent);">128px</span>
+          </div>
+          <div class="custom-slider" id="widthSliderContainer">
+            <div class="slider-track"></div>
+            <div class="slider-thumb" id="widthSliderThumb"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label>影调调色台</label>
+            <button id="resetToneBtn" class="reset-btn">↺ 重置</button>
+          </div>
+          <div class="xy-pad-container" id="xyPadContainer">
+            <canvas id="xyGridCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 纹理风格 -->
+      <div class="panel">
+        <div class="panel-title">纹理风格</div>
+        <div class="grid-buttons" id="ditherGrid">
+          <button class="btn-toggle active" data-algo="atkinson">Atkinson</button>
+          <button class="btn-toggle" data-algo="floyd-steinberg">Floyd</button>
+          <button class="btn-toggle" data-algo="bayer-4x4">Bayer 4x4</button>
+          <button class="btn-toggle" data-algo="bayer-8x8">Bayer 8x8</button>
+          <button class="btn-toggle" data-algo="random">随机噪点</button>
+          <button class="btn-toggle" data-algo="none">无抖动</button>
+        </div>
+      </div>
+
+      <!-- 调色板 -->
+      <div class="panel palette-panel">
+        <div class="panel-title">
+          <span>调色板</span>
+        </div>
+        <div class="palette-list" id="paletteList"></div>
+      </div>
+
+      <!-- 导出 -->
+      <div class="panel">
+        <button id="downloadBtn" class="action-btn" disabled>导出视频 (含音频)</button>
+        <div class="status-bar" id="statusBar"></div>
+      </div>
+
+    </aside>
+
+    <!-- 右侧预览区 -->
+    <section class="preview-area">
+      <div class="canvas-container">
+        <button id="closeImageBtn" class="close-btn" title="关闭视频">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18" stroke-linecap="square" stroke-linejoin="round"/>
+            <path d="M6 6L18 18" stroke-linecap="square" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <canvas id="mainCanvas"></canvas>
+      </div>
+
+      <div class="video-controls" id="videoControls">
+        <button id="playBtn" class="vc-play">▶ 播放</button>
+        <input type="range" id="seekBar" class="vc-seek" min="0" max="100" step="0.05" value="0">
+        <span id="timeLabel" class="vc-time">0:00 / 0:00</span>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+
+// 单文件应用：把 low.html 的像素化照片处理管线复刻到视频上。
+// 每一帧视频都经过：缩放 -> 影调映射 -> 颜色量化 + 抖动 -> 输出。
+const App = (() => {
+
+  // 全局状态：视频元素 + 像素化参数。
+  const state = {
+    video: null,
+    videoUrl: null,
+    videoReady: false,
+    playing: false,
+    forceRender: false,
+
+    targetWidth: 128,
+    ditherAlgo: 'atkinson',
+    palette: null,
+    paletteKey: 'dreamscape8',
+    isSerpentine: true,
+
+    toneX: 0,
+    toneY: 0,
+    exportFps: 30
+  };
+
+  // 内置调色板：与 low.html 完全一致。
+  const PALETTES = {
+    "dreamscape8": { name: "Dreamscape8", colors: ["#c9cca1", "#caa05a", "#ae6a47", "#8b4049", "#543344", "#515262", "#63787d", "#8ea091"] },
+    "red-noir": { name: "Red Noir", colors: ["#FF0000", "#000000"] },
+    "oil-6": { name: "Oil 6", colors: ["#fbf5ef", "#f2d3ab", "#c69fa5", "#8b6d9c", "#494d7e", "#272744"] },
+    "slso8": { name: "SLSO8", colors: ["#0d2b45", "#203c56", "#544e68", "#8d697a", "#d08159", "#ffaa5e", "#ffd4a3", "#ffecd6"] },
+    "blessing": { name: "Blessing", colors: ["#74569b", "#96fbc7", "#f7ffae", "#ffb3cb", "#d8bfd8"] },
+    "nyx8": { name: "Nyx8", colors: ["#08141e", "#0f2a3f", "#20394f", "#f6d6bd", "#c3a38a", "#997577", "#816271", "#4e495f"] },
+    "ammo-8": { name: "Ammo-8", colors: ["#040c06", "#112318", "#1e3a29", "#305d42", "#4d8061", "#89a257", "#bedc7f", "#eeffcc"] },
+    "aap-64": { name: "AAP-64", colors: ["#060608", "#141013", "#3b1725", "#73172d", "#b4202a", "#df3e23", "#fa6a0a", "#f9a31b", "#ffd541", "#fffc40", "#d6f264", "#9cdb43", "#59c135", "#14a02e", "#1a7a3e", "#24523b", "#122020", "#143464", "#285cc4", "#249fde", "#20d6c7", "#a6fcdb", "#ffffff", "#fef3c0", "#fad6b8", "#f5a097", "#e86a73", "#bc4a9b", "#793a80", "#403353", "#242234", "#221c1a", "#322b28", "#71413b", "#bb7547", "#dba463", "#f4d29c", "#dae0ea", "#b3b9d1", "#8b93af", "#6d758d", "#4a5462", "#333941", "#422433", "#5b3138", "#8e5252", "#ba756a", "#e9b5a3", "#e3e6ff", "#b9bffb", "#849be4", "#588dbe", "#477d85", "#23674e", "#328464", "#5daf8d", "#92dcba", "#cdf7e2", "#e4d2aa", "#c7b08b", "#a08662", "#796755", "#5a4e44", "#423934"] },
+    "ink": { name: "Ink", colors: ["#1f1f29", "#413a42", "#596070", "#96a2b3", "#eaf0d8"] },
+    "blk-nx64": { name: "BLK NX64", colors: ["#000000", "#12173d", "#293268", "#464b8c", "#6b74b2", "#909edd", "#c1d9f2", "#ffffff", "#a293c4", "#7b6aa5", "#53427f", "#3c2c68", "#431e66", "#5d2f8c", "#854cbf", "#b483ef", "#8cff9b", "#42bc7f", "#22896e", "#14665b", "#0f4a4c", "#0a2a33", "#1d1a59", "#322d89", "#354ab2", "#3e83d1", "#50b9eb", "#8cdaff", "#53a1ad", "#3b768f", "#21526b", "#163755", "#008782", "#00aaa5", "#27d3cb", "#78fae6", "#cdc599", "#988f64", "#5c5d41", "#353f23", "#919b45", "#afd370", "#ffe091", "#ffaa6e", "#ff695a", "#b23c40", "#ff6675", "#dd3745", "#a52639", "#721c2f", "#b22e69", "#e54286", "#ff6eaf", "#ffa5d5", "#ffd3ad", "#cc817a", "#895654", "#61393b", "#3f1f3c", "#723352", "#994c69", "#c37289", "#f29faa", "#ffccd0"] },
+    "crimson": { name: "Crimson", colors: ["#eff9d6", "#ba5044", "#7a1c4b", "#1b0326"] },
+    "fiery-dreams": { name: "Fiery Dreams", colors: ["#251534", "#461753", "#701355", "#a41759", "#cd2561", "#de5568", "#f0a383", "#fae4b9", "#fffef0"] },
+    "k-angels-away-screen": { name: "K-Angel", colors: ["#946aa3", "#8e6bff", "#589adf", "#14c8f9", "#6adcea", "#a5b0ce", "#afabf3", "#fe89d9", "#f3bbe7", "#aadcff", "#8afdfe", "#bafff5", "#d2d2d5", "#d7c5f1", "#ebccf2", "#dae8ff", "#feecfa", "#fcfeff"] },
+    "nopal-12": { name: "NOPAL-12", colors: ["#e2e4df", "#c5cfc4", "#a8b5ae", "#92929c", "#ffeced", "#fbd4d2", "#f1b4b4", "#cca3a3", "#f1eab6", "#e4dba0", "#cac18a", "#aba47b"] },
+    "saccharide": { name: "Saccharide", colors: ["#c09dc3", "#ebaebc", "#ffcabb", "#ffe5ba", "#c8dcbe", "#a0cac2", "#87afbb", "#9dccd7", "#c3deeb", "#a6c7e7", "#97abd4", "#8b8fb0", "#b5a5d3", "#e1b6db", "#ffcbd7", "#ffe8dc", "#f4d2cd", "#e2b7be", "#c19caf", "#7d7390", "#ada3b9", "#cbbfcf", "#e5d9e1", "#fff7f0"] },
+    "sailor-moon-background": { name: "Sailor Moon BG", colors: ["#bdffff", "#5db8ca", "#5cadc3", "#378dae", "#3c7596", "#1e6da0", "#144d70", "#00245c", "#a0e1d9", "#80bcb9", "#438d98", "#07687b", "#065866", "#06505c", "#054752", "#d998c3", "#d48cd4", "#8797c5", "#e055b8", "#b65bb2", "#675390", "#3c377b", "#e8f8d7", "#dddac7", "#fdd3b0", "#ffdac9", "#ffcec7", "#d9bed0"] },
+    "st-24": { name: "ST 24", colors: ["#111126", "#141433", "#17174d", "#281d73", "#3e2680", "#6c29a6", "#8136b3", "#ba41d9", "#de73e5", "#ed9df2", "#e9c2f2", "#ffffff", "#dae7f2", "#9de7f2", "#73c7e5", "#4192d9", "#3670b3", "#295ba6", "#23468c", "#1d2873", "#2953a6", "#3663b3", "#417ed9", "#73a8e5"] },
+    "st-8-phoenix": { name: "ST 8 Phoenix", colors: ["#330d10", "#4d130f", "#732017", "#992817", "#bf481d", "#d97e16", "#e5be22", "#f2e749"] },
+    "starry13": { name: "starry13", colors: ["#4d456d", "#795389", "#a4628a", "#d38595", "#e9a7a3", "#f0d7b1", "#aec6a5", "#7ba1ab", "#657ba3", "#5a5f92", "#7d7db7", "#ad96cf", "#e6addd"] },
+    "sweethope": { name: "SweetHope", colors: ["#615e85", "#9c8dc2", "#d9a3cd", "#ebc3a7", "#e0e0dc", "#a3d1af", "#90b4de", "#717fb0"] },
+    "dream-haze-8": { name: "Dream Haze 8", colors: ["#3c42c4", "#6e51c8", "#a065cd", "#ce79d2", "#d68fb8", "#dda2a3", "#eac4ae", "#f4dfbe"] }
+  };
+
+  // 缓存常用 DOM 节点。
+  const els = {
+    fileInput: document.getElementById('fileInput'),
+    uploadArea: document.getElementById('uploadArea'),
+
+    widthSliderContainer: document.getElementById('widthSliderContainer'),
+    widthSliderThumb: document.getElementById('widthSliderThumb'),
+    widthDisplay: document.getElementById('widthDisplay'),
+
+    xyPadContainer: document.getElementById('xyPadContainer'),
+    xyGridCanvas: document.getElementById('xyGridCanvas'),
+    resetToneBtn: document.getElementById('resetToneBtn'),
+
+    ditherGrid: document.getElementById('ditherGrid'),
+    paletteList: document.getElementById('paletteList'),
+    canvas: document.getElementById('mainCanvas'),
+    video: document.getElementById('sourceVideo'),
+    downloadBtn: document.getElementById('downloadBtn'),
+    statusBar: document.getElementById('statusBar'),
+    themeToggle: document.getElementById('themeToggle'),
+    mainContainer: document.getElementById('mainContainer'),
+    closeBtn: document.getElementById('closeImageBtn'),
+    playBtn: document.getElementById('playBtn'),
+    seekBar: document.getElementById('seekBar'),
+    timeLabel: document.getElementById('timeLabel')
+  };
+
+  function init() {
+    state.video = els.video;
+    setupEventListeners();
+    setupCustomSlider();
+    setupGridInteractions();
+    renderPaletteList();
+    loadPalette('dreamscape8');
+    updateTheme();
+    startRenderLoop();
+  }
+
+  // ---------- 事件绑定 ----------
+  function setupEventListeners() {
+    els.uploadArea.addEventListener('click', () => els.fileInput.click());
+    els.fileInput.addEventListener('change', handleFileSelect);
+    els.uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); els.uploadArea.style.borderColor = 'var(--fg)'; });
+    els.uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); els.uploadArea.style.borderColor = 'var(--border)'; });
+    els.uploadArea.addEventListener('drop', handleDrop);
+
+    // 抖动算法选择（事件代理）
+    els.ditherGrid.addEventListener('click', (e) => {
+      if (e.target.classList.contains('btn-toggle')) {
+        document.querySelectorAll('#ditherGrid .btn-toggle').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        state.ditherAlgo = e.target.dataset.algo;
+        requestProcess();
+      }
+    });
+
+    els.resetToneBtn.addEventListener('click', () => resetGridState());
+
+    els.downloadBtn.addEventListener('click', () => {
+      if (isRecording) stopExport();
+      else startExport();
+    });
+
+    els.closeBtn.addEventListener('click', closeVideo);
+
+    els.themeToggle.addEventListener('click', () => {
+      toggleTheme();
+      setTimeout(() => {
+        gridCtx = els.xyGridCanvas.getContext('2d');
+        drawGrid();
+      }, 50);
+    });
+
+    // 播放/暂停
+    els.playBtn.addEventListener('click', () => {
+      if (!state.videoReady) return;
+      if (state.video.paused) {
+        if (isRecording) {
+          // 导出过程中播放按钮仅用于中止
+        } else {
+          state.video.play().catch(() => {});
+        }
+      } else {
+        state.video.pause();
+      }
+    });
+
+    // 进度条拖动
+    els.seekBar.addEventListener('input', () => {
+      if (!state.videoReady) return;
+      const d = state.video.duration || 0;
+      if (d <= 0) return;
+      state.video.currentTime = (els.seekBar.value / 100) * d;
+      lastRenderedTime = -1;
+      state.forceRender = true;
+      updateTimeline();
+    });
+
+    // 视频元素事件
+    els.video.addEventListener('loadedmetadata', () => {
+      state.videoReady = true;
+      els.mainContainer.classList.add('has-video');
+      els.downloadBtn.disabled = false;
+      updateTimeline();
+      requestProcess();
+    });
+
+    els.video.addEventListener('loadeddata', () => requestProcess());
+    els.video.addEventListener('seeked', () => requestProcess());
+
+    els.video.addEventListener('play', () => {
+      state.playing = true;
+      els.playBtn.textContent = '⏸ 暂停';
+    });
+    els.video.addEventListener('pause', () => {
+      state.playing = false;
+      els.playBtn.textContent = '▶ 播放';
+    });
+    els.video.addEventListener('ended', () => {
+      state.playing = false;
+      els.playBtn.textContent = '▶ 播放';
+      if (isRecording && mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    });
+    els.video.addEventListener('timeupdate', updateTimeline);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    els.uploadArea.style.borderColor = 'var(--border)';
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('video/')) loadVideo(file);
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) loadVideo(file);
+    e.target.value = '';
+  }
+
+  // 加载视频：创建 object URL 并交给隐藏 video 解码。
+  function loadVideo(file) {
+    if (isRecording) stopExport();
+    if (state.videoUrl) URL.revokeObjectURL(state.videoUrl);
+
+    state.videoUrl = URL.createObjectURL(file);
+    state.videoReady = false;
+    state.playing = false;
+    lastRenderedTime = -1;
+
+    state.video.src = state.videoUrl;
+    state.video.load();
+    state.video.currentTime = 0;
+
+    els.mainContainer.classList.add('has-video');
+    els.downloadBtn.disabled = false;
+    els.playBtn.textContent = '▶ 播放';
+    els.seekBar.value = 0;
+    els.timeLabel.textContent = '0:00 / 0:00';
+    setStatus('');
+  }
+
+  function closeVideo(e) {
+    if (e) e.stopPropagation();
+    if (isRecording) stopExport();
+
+    state.video.pause();
+    state.video.removeAttribute('src');
+    state.video.load();
+    if (state.videoUrl) {
+      URL.revokeObjectURL(state.videoUrl);
+      state.videoUrl = null;
+    }
+
+    state.videoReady = false;
+    state.playing = false;
+    lastRenderedTime = -1;
+
+    els.mainContainer.classList.remove('has-video');
+    els.fileInput.value = '';
+    els.downloadBtn.disabled = true;
+    els.seekBar.value = 0;
+    els.timeLabel.textContent = '0:00 / 0:00';
+    els.playBtn.textContent = '▶ 播放';
+    setStatus('');
+
+    const ctx = els.canvas.getContext('2d');
+    ctx.clearRect(0, 0, els.canvas.width, els.canvas.height);
+    els.canvas.width = 0;
+    els.canvas.height = 0;
+  }
+
+  function updateTimeline() {
+    const d = state.video.duration || 0;
+    const t = state.video.currentTime || 0;
+    if (d > 0) els.seekBar.value = (t / d) * 100;
+    els.timeLabel.textContent = fmtTime(t) + ' / ' + fmtTime(d);
+  }
+
+  function fmtTime(t) {
+    t = Math.max(0, Math.floor(t || 0));
+    const m = Math.floor(t / 60);
+    const s = t % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function setStatus(msg) {
+    if (msg) {
+      els.statusBar.textContent = msg;
+      els.statusBar.classList.add('show');
+    } else {
+      els.statusBar.textContent = '';
+      els.statusBar.classList.remove('show');
+    }
+  }
+
+  // ---------- 主题 ----------
+  function updateTheme() {
+    const isDark = localStorage.getItem('pixelizer_theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  }
+
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('pixelizer_theme', next);
+    updateTheme();
+  }
+
+  // ---------- 宽度滑块 ----------
+  function setupCustomSlider() {
+    const min = 32;
+    const max = 640;
+    const step = 4;
+    let isDragging = false;
+
+    const updateUI = () => {
+      const containerW = els.widthSliderContainer.offsetWidth;
+      const percent = (state.targetWidth - min) / (max - min);
+      const leftPos = percent * containerW;
+      const clampedPos = Math.max(0, Math.min(containerW, leftPos));
+      els.widthSliderThumb.style.left = `${clampedPos}px`;
+      els.widthDisplay.textContent = `${state.targetWidth}px`;
+    };
+
+    const updateValueFromX = (clientX) => {
+      const rect = els.widthSliderContainer.getBoundingClientRect();
+      let x = clientX - rect.left;
+      x = Math.max(0, Math.min(rect.width, x));
+      const percent = x / rect.width;
+      let val = min + percent * (max - min);
+      val = Math.round(val / step) * step;
+      if (val !== state.targetWidth) {
+        state.targetWidth = val;
+        updateUI();
+        requestProcess();
+      }
+    };
+
+    const start = (e) => {
+      isDragging = true;
+      e.preventDefault();
+      els.widthSliderThumb.classList.add('active');
+    };
+
+    const move = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      updateValueFromX(clientX);
+    };
+
+    const end = () => {
+      isDragging = false;
+      els.widthSliderThumb.classList.remove('active');
+    };
+
+    els.widthSliderThumb.addEventListener('mousedown', start);
+    els.widthSliderThumb.addEventListener('touchstart', start, { passive: false });
+    window.addEventListener('mousemove', move);
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('mouseup', end);
+    window.addEventListener('touchend', end);
+    window.addEventListener('resize', updateUI);
+    setTimeout(updateUI, 100);
+  }
+
+  // ---------- XY 影调调色台 ----------
+  let gridCtx;
+  let isDraggingGrid = false;
+  let cursorX = 0;
+  let cursorY = 0;
+  let gridPoints = [];
+  let resetGridState = () => {};
+
+  const HIT_RADIUS = 44;
+
+  function setupGridInteractions() {
+    const canvas = els.xyGridCanvas;
+    gridCtx = canvas.getContext('2d');
+
+    const resizeGrid = () => {
+      const rect = els.xyPadContainer.getBoundingClientRect();
+      if (rect.width === 0) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      gridCtx.setTransform(1, 0, 0, 1, 0, 0);
+      gridCtx.scale(dpr, dpr);
+      if (cursorX === 0 && cursorY === 0) {
+        cursorX = rect.width / 2;
+        cursorY = rect.height / 2;
+      }
+      initGridPoints(rect.width, rect.height);
+      drawGrid();
+    };
+
+    const reset = () => {
+      const rect = els.xyPadContainer.getBoundingClientRect();
+      state.toneX = 0;
+      state.toneY = 0;
+      cursorX = rect.width / 2;
+      cursorY = rect.height / 2;
+      drawGrid();
+      requestProcess();
+    };
+
+    resetGridState = reset;
+
+    window.addEventListener('resize', resizeGrid);
+    setTimeout(resizeGrid, 100);
+
+    cursorX = 0;
+    cursorY = 0;
+
+    const updateCursor = (clientX, clientY) => {
+      const rect = els.xyPadContainer.getBoundingClientRect();
+      let x = clientX - rect.left;
+      let y = clientY - rect.top;
+      x = Math.max(0, Math.min(rect.width, x));
+      y = Math.max(0, Math.min(rect.height, y));
+      cursorX = x;
+      cursorY = y;
+      const nx = x / rect.width;
+      const ny = y / rect.height;
+      state.toneX = (nx * 2) - 1;
+      state.toneY = 1 - (ny * 2);
+      requestProcess();
+    };
+
+    const start = (e) => {
+      const touch = e.touches ? e.touches[0] : e;
+      const rect = els.xyPadContainer.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      const touchY = touch.clientY - rect.top;
+      const dist = Math.sqrt(Math.pow(touchX - cursorX, 2) + Math.pow(touchY - cursorY, 2));
+      if (dist <= HIT_RADIUS) {
+        isDraggingGrid = true;
+        if (e.cancelable) e.preventDefault();
+        updateCursor(touch.clientX, touch.clientY);
+        loopGrid();
+      } else {
+        isDraggingGrid = false;
+      }
+    };
+
+    const move = (e) => {
+      if (!isDraggingGrid) return;
+      if (e.cancelable) e.preventDefault();
+      const touch = e.touches ? e.touches[0] : e;
+      updateCursor(touch.clientX, touch.clientY);
+    };
+
+    const end = () => {
+      if (isDraggingGrid) {
+        isDraggingGrid = false;
+        drawGrid();
+      }
+    };
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    window.addEventListener('mousemove', move);
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('mouseup', end);
+    window.addEventListener('touchend', end);
+    window.addEventListener('touchcancel', end);
+    canvas.addEventListener('dblclick', reset);
+
+    loopGrid();
+  }
+
+  function initGridPoints(w, h) {
+    gridPoints = [];
+    const step = 20;
+    let cols = Math.ceil(w / step);
+    if (cols % 2 === 0) cols++;
+    let rows = Math.ceil(h / step);
+    if (rows % 2 === 0) rows++;
+
+    const totalW = (cols - 1) * step;
+    const totalH = (rows - 1) * step;
+    const offsetX = (w - totalW) / 2;
+    const offsetY = (h - totalH) / 2;
+
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        gridPoints.push({ x: offsetX + x * step, y: offsetY + y * step });
+      }
+    }
+  }
+
+  function drawGrid() {
+    const rect = els.xyPadContainer.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    gridCtx.clearRect(0, 0, w, h);
+    const themeFg = getComputedStyle(document.body).getPropertyValue('--fg').trim();
+    const maxDist = 40;
+
+    gridPoints.forEach(p => {
+      const dx = p.x - cursorX;
+      const dy = p.y - cursorY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      let alpha = 0.15;
+      let size = 3;
+      let thickness = 0.5;
+      if (dist < maxDist) {
+        const factor = (1 - dist / maxDist);
+        alpha = 0.15 + factor * 0.85;
+        size = 3 + factor * 2;
+        thickness = 0.5 + factor * 1.5;
+      }
+      gridCtx.beginPath();
+      gridCtx.strokeStyle = themeFg;
+      gridCtx.lineWidth = thickness;
+      gridCtx.globalAlpha = alpha;
+      gridCtx.moveTo(p.x - size, p.y);
+      gridCtx.lineTo(p.x + size, p.y);
+      gridCtx.moveTo(p.x, p.y - size);
+      gridCtx.lineTo(p.x, p.y + size);
+      gridCtx.stroke();
+    });
+  }
+
+  function loopGrid() {
+    drawGrid();
+    if (isDraggingGrid) {
+      requestAnimationFrame(loopGrid);
+    }
+  }
+
+  // ---------- 调色板 ----------
+  function renderPaletteList() {
+    els.paletteList.innerHTML = '';
+    const sortedPalettes = Object.keys(PALETTES)
+      .map(key => ({ key, ...PALETTES[key] }))
+      .sort((a, b) => a.colors.length - b.colors.length);
+
+    sortedPalettes.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'palette-btn';
+      if (p.key === 'dreamscape8') btn.classList.add('active');
+
+      btn.onclick = () => {
+        document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadPalette(p.key);
+      };
+
+      const headerRow = document.createElement('div');
+      headerRow.className = 'palette-name-row';
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = p.name;
+      const countSpan = document.createElement('span');
+      countSpan.className = 'palette-count';
+      countSpan.textContent = `${p.colors.length}色`;
+      headerRow.appendChild(nameSpan);
+      headerRow.appendChild(countSpan);
+
+      const dotsDiv = document.createElement('div');
+      dotsDiv.className = 'palette-preview-dots';
+      p.colors.forEach(c => {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.style.backgroundColor = c;
+        dotsDiv.appendChild(dot);
+      });
+
+      btn.appendChild(headerRow);
+      btn.appendChild(dotsDiv);
+      els.paletteList.appendChild(btn);
+    });
+  }
+
+  function loadPalette(key) {
+    state.paletteKey = key;
+    loadPaletteData(PALETTES[key].colors);
+  }
+
+  function loadPaletteData(colors) {
+    state.palette = hexToRgb(colors);
+    ensurePaletteFast(state.palette);
+    requestProcess();
+  }
+
+  function hexToRgb(hexArr) {
+    return hexArr.map(h => {
+      const r = parseInt(h.slice(1, 3), 16);
+      const g = parseInt(h.slice(3, 5), 16);
+      const b = parseInt(h.slice(5, 7), 16);
+      return { r, g, b };
+    });
+  }
+
+  // ---------- 处理调度与渲染循环 ----------
+  let processQueued = false;
+  let lastRenderedTime = -1;
+
+  function requestProcess() {
+    if (!state.videoReady || !state.palette) return;
+    // 播放中：渲染循环会在每一帧自动重新处理，这里无需额外排队。
+    if (state.playing) return;
+    if (processQueued) return;
+    processQueued = true;
+    requestAnimationFrame(() => {
+      processQueued = false;
+      processCurrentFrame();
+      if (isRecording) drawExport();
+    });
+  }
+
+  function startRenderLoop() {
+    const loop = () => {
+      requestAnimationFrame(loop);
+      if (!state.videoReady || !state.palette) return;
+      const t = state.video.currentTime;
+      if (state.forceRender || t !== lastRenderedTime) {
+        state.forceRender = false;
+        lastRenderedTime = t;
+        processCurrentFrame();
+        if (isRecording) drawExport();
+      }
+    };
+    requestAnimationFrame(loop);
+  }
+
+  // 复用离屏画布，减少每帧分配。
+  const proc = {
+    bufferCanvas: document.createElement('canvas'),
+    bufferCtx: null,
+    pixelCanvas: document.createElement('canvas'),
+    pixelCtx: null,
+    work: {
+      w: 0,
+      h: 0,
+      data: null,
+      imageData: null
+    }
+  };
+
+  // 主处理：视频帧 -> 缩放 -> 影调 -> 量化+抖动 -> 预览。
+  function processCurrentFrame() {
+    const { video, targetWidth, palette, ditherAlgo, toneX, toneY } = state;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh || !palette) return;
+
+    const aspect = vh / vw;
+    const targetHeight = Math.max(1, Math.round(targetWidth * aspect));
+
+    // 1) 把当前视频帧缩放到目标尺寸。
+    const buffer = proc.bufferCanvas;
+    buffer.width = targetWidth;
+    buffer.height = targetHeight;
+    if (!proc.bufferCtx) {
+      proc.bufferCtx = buffer.getContext('2d', { willReadFrequently: true });
+    }
+    const bctx = proc.bufferCtx;
+    bctx.imageSmoothingEnabled = true;
+    bctx.imageSmoothingQuality = 'high';
+    bctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+    const baseImageData = bctx.getImageData(0, 0, targetWidth, targetHeight);
+    const baseData = baseImageData.data;
+
+    // 2) 复制到工作区（复用缓冲区）。
+    const neededLen = baseData.length;
+    if (!proc.work.data || proc.work.data.length !== neededLen ||
+        proc.work.w !== targetWidth || proc.work.h !== targetHeight) {
+      proc.work.data = new Uint8ClampedArray(neededLen);
+      proc.work.imageData = new ImageData(proc.work.data, targetWidth, targetHeight);
+      proc.work.w = targetWidth;
+      proc.work.h = targetHeight;
+    }
+    proc.work.data.set(baseData);
+    const workImageData = proc.work.imageData;
+
+    // 3) 影调映射（与照片版一致）。
+    if (toneX !== 0 || toneY !== 0) {
+      const toneStats = computeToneStats(baseImageData);
+      applyDynamicToneMapping(workImageData, toneX, toneY, toneStats);
+    }
+
+    // 4) 颜色量化 + 抖动。
+    switch (ditherAlgo) {
+      case 'floyd-steinberg':
+        ditherErrorDiffusion(workImageData, palette, 'floyd', state.isSerpentine);
+        break;
+      case 'atkinson':
+        ditherErrorDiffusion(workImageData, palette, 'atkinson', state.isSerpentine);
+        break;
+      case 'bayer-4x4':
+        ditherBayer(workImageData, palette, 4);
+        break;
+      case 'bayer-8x8':
+        ditherBayer(workImageData, palette, 8);
+        break;
+      case 'random':
+        ditherRandom(workImageData, palette);
+        break;
+      default:
+        ditherNearest(workImageData, palette);
+    }
+
+    // 5) 预览用无插值放大，保持像素硬边。
+    const displayScale = Math.max(1, Math.floor(1000 / targetWidth));
+    els.canvas.width = targetWidth * displayScale;
+    els.canvas.height = targetHeight * displayScale;
+    const displayCtx = els.canvas.getContext('2d');
+
+    const pixelCanvas = proc.pixelCanvas;
+    pixelCanvas.width = targetWidth;
+    pixelCanvas.height = targetHeight;
+    if (!proc.pixelCtx) {
+      proc.pixelCtx = pixelCanvas.getContext('2d', { willReadFrequently: true });
+    }
+    proc.pixelCtx.putImageData(workImageData, 0, 0);
+
+    displayCtx.imageSmoothingEnabled = false;
+    displayCtx.drawImage(pixelCanvas, 0, 0, els.canvas.width, els.canvas.height);
+
+    state.lastOutput = pixelCanvas;
+    els.downloadBtn.disabled = false;
+  }
+
+  // ---------- 影调映射（与 low.html 一致） ----------
+  function applyDynamicToneMapping(imageData, x, y, toneStats) {
+    const data = imageData.data;
+    const len = data.length;
+
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+
+    const pivotRaw = (toneStats && typeof toneStats.pivot === 'number') ? toneStats.pivot : 0.5;
+    const range = (toneStats && typeof toneStats.range === 'number') ? toneStats.range : 1.0;
+    const p5Raw = (toneStats && typeof toneStats.p5 === 'number') ? toneStats.p5 : 0;
+    const p95Raw = (toneStats && typeof toneStats.p95 === 'number') ? toneStats.p95 : 255;
+
+    const strength = clamp01(Math.max(Math.abs(x), Math.abs(y)));
+    const guard = 1 + Math.round(3 * strength);
+    const eps = guard / 255.0;
+    const lo = eps;
+    const hi = 1.0 - eps;
+
+    const logit = (v) => Math.log(v / (1 - v));
+    const invLogit = (t) => 1 / (1 + Math.exp(-t));
+
+    const pivot = clamp(pivotRaw, 0.05, 0.95);
+    const pivotSafe = clamp(pivot, lo, hi);
+    const lp = logit(pivotSafe);
+
+    const contrastConfidence = smoothstep(0.18, 0.75, range);
+
+    const targetGuard = guard + Math.round(5 * strength);
+    const loT = clamp(targetGuard / 255.0, lo, 0.45);
+    const hiT = clamp(1.0 - (targetGuard / 255.0), 0.55, hi);
+    const Llo = logit(loT);
+    const Lhi = logit(hiT);
+
+    const v5 = clamp(p5Raw / 255.0, lo, hi);
+    const v95 = clamp(p95Raw / 255.0, lo, hi);
+    const t5 = logit(v5);
+    const t95 = logit(v95);
+    const d5 = t5 - lp;
+    const d95 = t95 - lp;
+
+    let cMax = 8.0;
+    if (d95 > 1e-6) cMax = Math.min(cMax, (Lhi - lp) / d95);
+    if (d5 < -1e-6) cMax = Math.min(cMax, (Llo - lp) / d5);
+    cMax = clamp(cMax, 1.0, 8.0);
+
+    const xCurve = Math.sign(x) * Math.pow(Math.abs(x), 1.25);
+    const xScale = 1.0 + (1.0 - contrastConfidence) * 0.30;
+    const xEff = clamp(xCurve * xScale, -1.0, 1.0);
+    const xSat = Math.tanh(xEff * 1.25) / Math.tanh(1.25);
+    const contrastMax = 2.12;
+    const cWanted = Math.pow(2, xSat * contrastMax);
+    const c = Math.min(cWanted, cMax);
+
+    const yCurve = Math.sign(y) * Math.pow(Math.abs(y), 1.60);
+    const yScale = 1.0 + contrastConfidence * 0.50;
+    const dirScaleRaw = (y >= 0)
+      ? (1.0 + (0.5 - pivotSafe) * 0.90)
+      : (1.0 + (pivotSafe - 0.5) * 0.90);
+    const dirScale = clamp(dirScaleRaw, 0.90, 1.25);
+    const yEff = clamp(yCurve * yScale * dirScale, -1.0, 1.0);
+    const ySat = Math.tanh(yEff * 1.15) / Math.tanh(1.15);
+
+    const yRangeT = clamp01(x + 1.0);
+    const yRangeScale = 0.62 + 0.38 * yRangeT;
+    const bMax = (2.55 + 0.85 * contrastConfidence) * yRangeScale;
+    const brightnessRangeScale = 0.7;
+    const bBase = ySat * bMax * brightnessRangeScale;
+    const yWeightPow = 1.05;
+
+    const lumaLut = new Float32Array(256);
+    for (let i = 0; i < 256; i++) {
+      const v = clamp(i / 255.0, lo, hi);
+      let t = (logit(v) - lp) * c + lp;
+      if (bBase !== 0) {
+        const vc = invLogit(t);
+        const w = (bBase > 0)
+          ? Math.pow(1.0 - vc, yWeightPow)
+          : Math.pow(vc, yWeightPow);
+        t += bBase * w;
+      }
+      const out = clamp(invLogit(t), lo, hi);
+      lumaLut[i] = out * 255.0;
+    }
+
+    const satLut = new Float32Array(256);
+    const edgeWidth = 0.30;
+    const satEdgeStrength = 0.78;
+    const minSat = 1.0 - satEdgeStrength * strength;
+    const deltaK = 0.9 + 2.2 * strength;
+
+    for (let i = 0; i < 256; i++) {
+      const nl = lumaLut[i];
+      const nl01 = nl / 255.0;
+      const dEdge = Math.min(nl01, 1.0 - nl01);
+      let t = dEdge / edgeWidth;
+      t = clamp01(t);
+      const edgeW = t * t * (3 - 2 * t);
+      const satEdge = minSat + (1.0 - minSat) * edgeW;
+      const dL = Math.abs(nl - i) / 255.0;
+      const satDelta = Math.exp(-dL * deltaK);
+      const satDeltaEdge = edgeW + (1.0 - edgeW) * satDelta;
+      satLut[i] = clamp01(satEdge * satDeltaEdge);
+    }
+
+    const lower = guard;
+    const upper = 255 - guard;
+
+    for (let idx = 0; idx < len; idx += 4) {
+      const r0 = data[idx];
+      const g0 = data[idx + 1];
+      const b0 = data[idx + 2];
+
+      const l = (77 * r0 + 150 * g0 + 29 * b0) >> 8;
+      const nl = lumaLut[l];
+
+      const dr = r0 - l;
+      const dg = g0 - l;
+      const db = b0 - l;
+
+      let sat = 1.0;
+      if (dr > 0) sat = Math.min(sat, (upper - nl) / dr);
+      else if (dr < 0) sat = Math.min(sat, (lower - nl) / dr);
+      if (dg > 0) sat = Math.min(sat, (upper - nl) / dg);
+      else if (dg < 0) sat = Math.min(sat, (lower - nl) / dg);
+      if (db > 0) sat = Math.min(sat, (upper - nl) / db);
+      else if (db < 0) sat = Math.min(sat, (lower - nl) / db);
+
+      sat = clamp01(sat);
+      if (!Number.isFinite(sat)) sat = 0.0;
+      sat *= satLut[l];
+
+      const rAdj = nl + dr * sat;
+      const gAdj = nl + dg * sat;
+      const bAdj = nl + db * sat;
+
+      data[idx] = rAdj;
+      data[idx + 1] = gAdj;
+      data[idx + 2] = bAdj;
+    }
+  }
+
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const smoothstep = (edge0, edge1, x) => {
+    if (edge0 === edge1) return x < edge0 ? 0 : 1;
+    const t = clamp01((x - edge0) / (edge1 - edge0));
+    return t * t * (3 - 2 * t);
+  };
+
+  // 采样像素估计直方图统计（p5/p50/p95）。
+  function computeToneStats(imageData) {
+    const data = imageData.data;
+    const hist = new Uint32Array(256);
+    const totalPixels = imageData.width * imageData.height;
+    const targetSamples = 32768;
+    const stepPixels = Math.max(1, Math.floor(totalPixels / targetSamples));
+    const stepBytes = stepPixels * 4;
+
+    let samples = 0;
+    for (let i = 0; i < data.length; i += stepBytes) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const l = (0.299 * r + 0.587 * g + 0.114 * b) | 0;
+      hist[l] += 1;
+      samples += 1;
+    }
+
+    if (samples <= 0) {
+      return { pivot: 0.5, p5: 0, p50: 128, p95: 255, range: 1.0 };
+    }
+
+    const pct = (q) => {
+      const target = Math.min(samples, Math.max(1, Math.round(q * samples)));
+      let cum = 0;
+      for (let i = 0; i < 256; i++) {
+        cum += hist[i];
+        if (cum >= target) return i;
+      }
+      return 255;
+    };
+
+    const p5 = pct(0.05);
+    const p50 = pct(0.50);
+    const p95 = pct(0.95);
+    const range = (p95 - p5) / 255.0;
+    const pivot = clamp01(p50 / 255.0);
+
+    return { pivot, p5, p50, p95, range };
+  }
+
+  // ---------- 调色板查找缓存（与 low.html 一致） ----------
+  const PALETTE_CACHE_BITS = 6;
+  const PALETTE_CACHE_SHIFT = 8 - PALETTE_CACHE_BITS;
+  const PALETTE_CACHE_SIZE = 1 << (PALETTE_CACHE_BITS * 3);
+
+  let paletteFast = {
+    palette: null,
+    len: 0,
+    r: null,
+    g: null,
+    b: null,
+    table: null
+  };
+
+  function rebuildPaletteFast(palette) {
+    const len = palette.length;
+    const r = new Uint8Array(len);
+    const g = new Uint8Array(len);
+    const b = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      const p = palette[i];
+      r[i] = p.r;
+      g[i] = p.g;
+      b[i] = p.b;
+    }
+    const table = new Int16Array(PALETTE_CACHE_SIZE);
+    table.fill(-1);
+    return { palette, len, r, g, b, table };
+  }
+
+  function ensurePaletteFast(palette) {
+    if (!paletteFast.table || paletteFast.palette !== palette) {
+      paletteFast = rebuildPaletteFast(palette);
+    }
+    return paletteFast;
+  }
+
+  function colorDistanceSq(r1, g1, b1, r2, g2, b2) {
+    const rmean = (r1 + r2) >> 1;
+    const r = r1 - r2;
+    const g = g1 - g2;
+    const b = b1 - b2;
+    return (((512 + rmean) * r * r) >> 8) + (4 * g * g) + (((767 - rmean) * b * b) >> 8);
+  }
+
+  function nearestPaletteIndex(r, g, b, pf) {
+    const key =
+      ((r >> PALETTE_CACHE_SHIFT) << (PALETTE_CACHE_BITS * 2)) |
+      ((g >> PALETTE_CACHE_SHIFT) << PALETTE_CACHE_BITS) |
+      (b >> PALETTE_CACHE_SHIFT);
+
+    let cached = pf.table[key];
+    if (cached >= 0) return cached;
+
+    let best = 0;
+    let bestDist = Infinity;
+    const pr = pf.r;
+    const pg = pf.g;
+    const pb = pf.b;
+    const n = pf.len;
+
+    for (let i = 0; i < n; i++) {
+      const dist = colorDistanceSq(r, g, b, pr[i], pg[i], pb[i]);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+        if (dist === 0) break;
+      }
+    }
+
+    pf.table[key] = best;
+    return best;
+  }
+
+  // ---------- 抖动算法（与 low.html 一致） ----------
+  const ERROR_KERNELS = (() => {
+    const floyd = [[1, 0, 7 / 16], [-1, 1, 3 / 16], [0, 1, 5 / 16], [1, 1, 1 / 16]];
+    const atkinson = [[1, 0, 1 / 8], [2, 0, 1 / 8], [-1, 1, 1 / 8], [0, 1, 1 / 8], [1, 1, 1 / 8], [0, 2, 1 / 8]];
+    const flipX = (k) => k.map(([dx, dy, f]) => [-dx, dy, f]);
+    return {
+      floyd: { fwd: floyd, rev: flipX(floyd) },
+      atkinson: { fwd: atkinson, rev: flipX(atkinson) }
+    };
+  })();
+
+  const BAYER_MAP4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+  const BAYER_MAP8 = [
+    [0, 48, 12, 60, 3, 51, 15, 63],
+    [32, 16, 44, 28, 35, 19, 47, 31],
+    [8, 56, 4, 52, 11, 59, 7, 55],
+    [40, 24, 36, 20, 43, 27, 39, 23],
+    [2, 50, 14, 62, 1, 49, 13, 61],
+    [34, 18, 46, 30, 33, 17, 45, 29],
+    [10, 58, 6, 54, 9, 57, 5, 53],
+    [42, 26, 38, 22, 41, 25, 37, 21]
+  ];
+  const BAYER_STRENGTH = 30;
+  const BAYER_FACTOR4 = (() => {
+    const t = new Float32Array(16);
+    for (let i = 0; i < 16; i++) t[i] = ((i / 16) - 0.5) * BAYER_STRENGTH;
+    return t;
+  })();
+  const BAYER_FACTOR8 = (() => {
+    const t = new Float32Array(64);
+    for (let i = 0; i < 64; i++) t[i] = ((i / 64) - 0.5) * BAYER_STRENGTH;
+    return t;
+  })();
+
+  function ditherNearest(imgData, palette) {
+    const pf = ensurePaletteFast(palette);
+    const pr = pf.r;
+    const pg = pf.g;
+    const pb = pf.b;
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const idx = nearestPaletteIndex(d[i], d[i + 1], d[i + 2], pf);
+      d[i] = pr[idx];
+      d[i + 1] = pg[idx];
+      d[i + 2] = pb[idx];
+    }
+  }
+
+  function ditherRandom(imgData, palette) {
+    const pf = ensurePaletteFast(palette);
+    const pr = pf.r;
+    const pg = pf.g;
+    const pb = pf.b;
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const noise = ((Math.random() * 31) | 0) - 15;
+      let r = d[i] + noise;
+      let g = d[i + 1] + noise;
+      let b = d[i + 2] + noise;
+      if (r < 0) r = 0; else if (r > 255) r = 255;
+      if (g < 0) g = 0; else if (g > 255) g = 255;
+      if (b < 0) b = 0; else if (b > 255) b = 255;
+      const idx = nearestPaletteIndex(r, g, b, pf);
+      d[i] = pr[idx];
+      d[i + 1] = pg[idx];
+      d[i + 2] = pb[idx];
+    }
+  }
+
+  function ditherErrorDiffusion(imgData, palette, type, serpentine) {
+    const pf = ensurePaletteFast(palette);
+    const pr = pf.r;
+    const pg = pf.g;
+    const pb = pf.b;
+    const w = imgData.width | 0;
+    const h = imgData.height | 0;
+    const d = imgData.data;
+    const kernelPair = ERROR_KERNELS[type];
+    const kernelFwd = kernelPair.fwd;
+    const kernelRev = kernelPair.rev;
+
+    for (let y = 0; y < h; y++) {
+      const reverse = serpentine && ((y & 1) === 1);
+      const kernel = reverse ? kernelRev : kernelFwd;
+      let x = reverse ? (w - 1) : 0;
+      const endX = reverse ? -1 : w;
+      const stepX = reverse ? -1 : 1;
+      const rowOffset = (y * w) << 2;
+
+      for (; x !== endX; x += stepX) {
+        const i = rowOffset + (x << 2);
+        const oldR = d[i];
+        const oldG = d[i + 1];
+        const oldB = d[i + 2];
+
+        const idx = nearestPaletteIndex(oldR, oldG, oldB, pf);
+        const newR = pr[idx];
+        const newG = pg[idx];
+        const newB = pb[idx];
+
+        d[i] = newR;
+        d[i + 1] = newG;
+        d[i + 2] = newB;
+
+        const errR = oldR - newR;
+        const errG = oldG - newG;
+        const errB = oldB - newB;
+
+        for (let k = 0; k < kernel.length; k++) {
+          const dx = kernel[k][0];
+          const dy = kernel[k][1];
+          const factor = kernel[k][2];
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+          const ni = ((ny * w + nx) << 2);
+          d[ni] = d[ni] + errR * factor;
+          d[ni + 1] = d[ni + 1] + errG * factor;
+          d[ni + 2] = d[ni + 2] + errB * factor;
+        }
+      }
+    }
+  }
+
+  function ditherBayer(imgData, palette, mapSize) {
+    const pf = ensurePaletteFast(palette);
+    const pr = pf.r;
+    const pg = pf.g;
+    const pb = pf.b;
+    const currentMap = (mapSize === 8) ? BAYER_MAP8 : BAYER_MAP4;
+    const factorTable = (mapSize === 8) ? BAYER_FACTOR8 : BAYER_FACTOR4;
+    const w = imgData.width | 0;
+    const h = imgData.height | 0;
+    const d = imgData.data;
+
+    for (let y = 0; y < h; y++) {
+      const mapRow = currentMap[y % mapSize];
+      const rowOffset = (y * w) << 2;
+      for (let x = 0; x < w; x++) {
+        const i = rowOffset + (x << 2);
+        const mapValue = mapRow[x % mapSize];
+        const factor = factorTable[mapValue];
+        let r = d[i] + factor;
+        let g = d[i + 1] + factor;
+        let b = d[i + 2] + factor;
+        if (r < 0) r = 0; else if (r > 255) r = 255;
+        if (g < 0) g = 0; else if (g > 255) g = 255;
+        if (b < 0) b = 0; else if (b > 255) b = 255;
+        r = r | 0;
+        g = g | 0;
+        b = b | 0;
+        const idx = nearestPaletteIndex(r, g, b, pf);
+        d[i] = pr[idx];
+        d[i + 1] = pg[idx];
+        d[i + 2] = pb[idx];
+      }
+    }
+  }
+
+  // ---------- 音频分离 / 合并 ----------
+  // 思路：先把原视频音频单独抽出来，像素化只处理视频轨道；
+  // 导出时再把「处理后的画面」与「原始音频」合并成一条流交给 MediaRecorder。
+  let audioCtx = null;          // Web Audio 上下文（用于静默捕获）
+  let audioSourceNode = null;   // 把 video 元素接入 Web Audio 图
+  let audioDestNode = null;     // 输出到 MediaStreamDestination，供合并用
+
+  function prepareAudioGraph() {
+    if (audioDestNode) return true;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    try {
+      audioCtx = new AC();
+      audioSourceNode = audioCtx.createMediaElementSource(state.video);
+      audioDestNode = audioCtx.createMediaStreamDestination();
+      // 只连到 MediaStreamDestination，不连扬声器 -> 静默捕获，不打扰预览
+      audioSourceNode.connect(audioDestNode);
+      return true;
+    } catch (e) {
+      audioCtx = null;
+      return false;
+    }
+  }
+
+  function getAudioTracks() {
+    // 首选：Web Audio 图提供的音频流
+    if (audioDestNode && audioDestNode.stream) {
+      const tracks = audioDestNode.stream.getAudioTracks();
+      if (tracks.length) return tracks;
+    }
+    // 回退：直接从 video 元素 captureStream 拿音频（导出时会有原声外放）
+    try {
+      return state.video.captureStream().getAudioTracks();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ---------- 导出（WebM / MP4 录制） ----------
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let exportCanvas = null;
+  let exportCtx = null;
+  let isRecording = false;
+
+  function pickMime() {
+    if (typeof MediaRecorder === 'undefined') return '';
+    const candidates = [
+      'video/webm;codecs=vp9',
+      'video/webm;codecs=vp8',
+      'video/webm',
+      'video/mp4'
+    ];
+    for (const c of candidates) {
+      if (MediaRecorder.isTypeSupported(c)) return c;
+    }
+    return '';
+  }
+
+  function ensureExportCanvas() {
+    if (!exportCanvas) {
+      exportCanvas = document.createElement('canvas');
+      exportCtx = exportCanvas.getContext('2d');
+    }
+    if (exportCanvas.width !== els.canvas.width || exportCanvas.height !== els.canvas.height) {
+      exportCanvas.width = els.canvas.width;
+      exportCanvas.height = els.canvas.height;
+    }
+  }
+
+  function drawExport() {
+    ensureExportCanvas();
+    // 尺寸不一致（导出中改了宽度）时缩放填充，保持一致输出。
+    if (exportCanvas.width !== els.canvas.width || exportCanvas.height !== els.canvas.height) {
+      exportCtx.imageSmoothingEnabled = true;
+      exportCtx.drawImage(els.canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+    } else {
+      exportCtx.imageSmoothingEnabled = false;
+      exportCtx.drawImage(els.canvas, 0, 0);
+    }
+  }
+
+  function startExport() {
+    if (!state.videoReady || isRecording) return;
+    const mime = pickMime();
+    if (!mime) {
+      setStatus('当前浏览器不支持录制导出，请使用 Chrome / Edge / Firefox');
+      return;
+    }
+
+    recordedChunks = [];
+    ensureExportCanvas();
+
+    // 1) 分离音频：优先用 Web Audio 静默抽取，失败则回退到 captureStream。
+    prepareAudioGraph();
+    if (audioCtx && audioCtx.state !== 'running') {
+      audioCtx.resume().catch(() => {});
+    }
+
+    // 让音频进入捕获（此刻尚未播放，不会外放）。
+    state.video.muted = false;
+    const audioTracks = getAudioTracks();
+
+    // 2) 处理后的画面轨道来自像素化 canvas。
+    const canvasStream = exportCanvas.captureStream(state.exportFps);
+    const videoTrack = canvasStream.getVideoTracks()[0];
+
+    // 3) 合并：处理后的视频轨道 + 原始音频轨道。
+    const combinedTracks = videoTrack ? [videoTrack, ...audioTracks] : [...audioTracks];
+    const combined = new MediaStream(combinedTracks);
+
+    try {
+      mediaRecorder = new MediaRecorder(combined, { mimeType: mime, videoBitsPerSecond: 8_000_000 });
+    } catch (err) {
+      mediaRecorder = new MediaRecorder(combined);
+    }
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size) recordedChunks.push(e.data);
+    };
+    mediaRecorder.onstop = () => {
+      const type = (mediaRecorder.mimeType || mime || 'video/webm');
+      const ext = type.includes('mp4') ? 'mp4' : 'webm';
+      const blob = new Blob(recordedChunks, { type });
+      downloadBlob(blob, 'pixel-video-' + Date.now() + '.' + ext);
+      isRecording = false;
+      els.downloadBtn.classList.remove('recording');
+      els.downloadBtn.disabled = false;
+      els.downloadBtn.textContent = '导出视频 (含音频)';
+      setStatus(audioTracks.length ? '导出完成（已合并原音频）' : '导出完成（源视频无音频轨）');
+      canvasStream.getTracks().forEach(t => t.stop());
+      state.video.muted = true; // 恢复静默，避免导出结束后继续外放
+    };
+
+    isRecording = true;
+    els.downloadBtn.classList.add('recording');
+    els.downloadBtn.disabled = false;
+    els.downloadBtn.textContent = '⏹ 停止导出';
+    setStatus('正在录制（时长 = 原视频时长，含原音频）…');
+
+    state.video.currentTime = 0;
+    lastRenderedTime = -1;
+    state.forceRender = true;
+
+    mediaRecorder.start(200);
+    state.video.play().catch(() => {});
+  }
+
+  function stopExport() {
+    if (isRecording && mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 1000);
+  }
+
+  return { init };
+})();
+
+App.init();
+
+</script>
+</body>
+</html>
