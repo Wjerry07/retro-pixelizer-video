@@ -1,8 +1,7 @@
-# Retro Pixelizer Pro
+# Retro Pixelizer Pro video
 
-导入你的照片，调整参数，把它变为复古的像素艺术风格！
-
-👉 **[在线体验](https://chixi4.github.io/retro-pixelizer/)**
+导入你的视频，调整参数，把它变为复古的像素艺术风格！
+灵感来源于chixi4
 
 ## 主要功能
 
@@ -14,12 +13,7 @@
 * **纯本地运行**：单 HTML 文件应用，所有图片处理均在浏览器本地完成，保护隐私。
 * **全平台支持**：适配手机与电脑端，支持深色/浅色模式切换。
 
-## 使用方式
-
-**方式 1（推荐）：**
-直接访问在线地址：[https://chixi4.github.io/retro-pixelizer/](https://chixi4.github.io/retro-pixelizer/)
-
-**方式 2（离线使用）：**
+**离线使用**
 下载本仓库的 `index.html` 文件，直接双击使用浏览器打开即可，无需安装任何环境。
 
 ## 资源
