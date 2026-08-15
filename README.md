@@ -16,6 +16,14 @@
 **离线使用**
 下载本仓库的 `video.html` 文件，直接双击使用浏览器打开即可，无需安装任何环境。
 
+## 提示
+
+* **静默捕获**：用 Web Audio 的 createMediaElementSource + createMediaStreamDestination 把音频单独抽出来接进录音流、但不接扬声器——这样导出时不会外放原声，音画依然同步（因为是实时录制）。
+* **回退**：如果浏览器不支持 Web Audio，则回退（此时导出会外放原声，属正常现象）。
+导出会从头实时播放一遍并录制，完成后自动下载带原声的 WebM。若源视频本身没有音轨，会提示「源视频无音频轨」。
+
+* **说明**：受限于纯浏览器方案，导出是实时渲染，即时长 ≈ 原视频时长。
+
 ## 资源
 
 更多像素画调色板灵感可参考：[Lospec Palette List](https://lospec.com/palette-list/tag/artist)
